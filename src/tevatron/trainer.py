@@ -27,7 +27,7 @@ except ModuleNotFoundError:
 
 class TevatronTrainer(Trainer):
     def __init__(self, *args, **kwargs):
-        super(TevatronTrainer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._dist_loss_scale_factor = dist.get_world_size() if self.args.negatives_x_device else 1
 
     def _save(self, output_dir: Optional[str] = None):
@@ -61,6 +61,17 @@ class TevatronTrainer(Trainer):
             drop_last=True,
             num_workers=self.args.dataloader_num_workers,
         )
+
+    def compute_loss(self, model, inputs):
+        query, passage = inputs
+        return model(query=query, passage=passage).loss
+
+    def training_step(self, *args):
+        return super(TevatronTrainer, self).training_step(*args) / self._dist_loss_scale_factor
+
+class TevatronSegmentTrainer(TevatronTrainer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def train(
             self,
@@ -146,10 +157,8 @@ class TevatronTrainer(Trainer):
         # max_steps = math.ceil(args.num_train_epochs * num_update_steps_per_epoch)
         # logger.info(f"  Total optimization steps in all segments     = {max_steps}")
         # self.create_optimizer_and_scheduler(num_training_steps=max_steps)
-        num_train_epochs_segments = [2, 5, 20]
-        for idx in range(len(self.train_dataset.train_dataset_segments)):
-            if idx == 0 or idx == 1:
-                continue
+        num_train_epochs_segments = self.args.train_epochs_segments
+        for idx in range(self.args.start_segemnt_id, len(self.train_dataset.train_dataset_segments)):
             self.state = TrainerState()
             self.train_dataset.set_segment(idx)
             self.optimizer, self.lr_scheduler = None, None
@@ -167,15 +176,8 @@ class TevatronTrainer(Trainer):
                 ignore_keys_for_eval=ignore_keys_for_eval,
             )
             train_outputs.append(train_output)
+            # logger.info("idx {}: {}".format(str(idx), str(train_output)))
         return train_outputs
-
-    def compute_loss(self, model, inputs):
-        query, passage = inputs
-        queries, passages = self._prepare_inputs(inputs)
-        return model(query=query, passage=passage).loss
-
-    def training_step(self, *args):
-        return super(TevatronTrainer, self).training_step(*args) / self._dist_loss_scale_factor
 
 
 def split_dense_inputs(model_input: dict, chunk_size: int):
