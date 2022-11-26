@@ -11,9 +11,9 @@ from transformers import (
 
 from tevatron.arguments import ModelArguments, DataArguments, \
     TevatronTrainingArguments as TrainingArguments
-from tevatron.data import TrainDataset, QPCollator
+from tevatron.data import TrainDataset, QPCollator, SegmentTrainDataset
 from tevatron.modeling import DenseModel
-from tevatron.trainer import TevatronTrainer as Trainer, GCTrainer
+from tevatron.trainer import TevatronTrainer as Trainer, GCTrainer, TevatronSegmentTrainer
 from tevatron.datasets import HFTrainDataset
 
 logger = logging.getLogger(__name__)
@@ -81,11 +81,24 @@ def main():
     if training_args.local_rank > 0:
         print("Waiting for main process to perform the mapping")
         torch.distributed.barrier()
-    train_dataset = TrainDataset(data_args, train_dataset.process(), tokenizer)
+    if not data_args.segment_training:
+        train_dataset = TrainDataset(data_args, train_dataset.process(), tokenizer)
+    else:
+        train_dataset = SegmentTrainDataset(data_args, train_dataset.process(), tokenizer)
     if training_args.local_rank == 0:
         print("Loading results from main process")
         torch.distributed.barrier()
-
+    if training_args.grad_cache:
+        if not data_args.segment_training:
+            trainer_cls = GCTrainer
+        else:
+            raise NotImplemented("grad_cache with segment")
+    else:
+        if not data_args.segment_training:
+            trainer_cls = Trainer
+        else:
+            trainer_cls = TevatronSegmentTrainer
+     
     trainer_cls = GCTrainer if training_args.grad_cache else Trainer
     trainer = trainer_cls(
         model=model,

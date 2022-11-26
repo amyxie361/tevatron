@@ -52,6 +52,15 @@ class DataArguments:
     dataset_name: str = field(
         default=None, metadata={"help": "huggingface dataset name"}
     )
+    segment_training: bool = field(
+        default=False, metadata={"help": "whether segment data according to semilarity"}
+    )
+    score_file: str = field(
+        default="qid2score_by_doc_fiqa.pkl", metadata={"help": "file where store the train set similarity to the target domain"}
+    )
+    score_segments: List[float] = field(
+        default_factory=lambda: [0.03, 0.08, 1], metadata={"help": "similarity threshold for segmenting the training set"}
+    )
     passage_field_separator: str = field(default=' ')
     dataset_proc_num: int = field(
         default=12, metadata={"help": "number of proc used in dataset preprocess"}
@@ -121,3 +130,4 @@ class TevatronTrainingArguments(TrainingArguments):
     grad_cache: bool = field(default=False, metadata={"help": "Use gradient cache update"})
     gc_q_chunk_size: int = field(default=4)
     gc_p_chunk_size: int = field(default=32)
+    train_epochs_segments: List[int] = field(default_factory=lambda: [3, 3, 10])

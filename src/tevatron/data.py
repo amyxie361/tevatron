@@ -2,6 +2,7 @@ import random
 from dataclasses import dataclass
 from typing import List, Tuple
 import pickle
+from tqdm import tqdm, trange
 
 import datasets
 from torch.utils.data import Dataset
@@ -102,8 +103,9 @@ class SegmentTrainDataset(TrainDataset):
         score_segments = data_args.score_segments
         score_segments_i = 0
         pre_i = 0
+        print("Start segmentation according to scores:", score_segments)
 
-        for i in range(len(train_dataset_raw)):
+        for i in trange(len(train_dataset_raw)):
             if train_dataset_raw[i]['score'] > score_segments[score_segments_i]:
                 train_dataset_segments.append(train_dataset_raw[pre_i:i])
                 score_segments_i += 1
@@ -120,8 +122,8 @@ class SegmentTrainDataset(TrainDataset):
         return len(self.train_data['query_id'])
 
     def __getitem__(self, item) -> Tuple[BatchEncoding, List[BatchEncoding]]:
-        group = {key:self.train_data[key][item] for key in self.train_data}
-
+        group = self.train_data[item]
+        # group = {key:self.train_data[key][item] for key in self.train_data}
 
 
 class EncodeDataset(Dataset):
