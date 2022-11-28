@@ -64,7 +64,6 @@ class TevatronTrainer(Trainer):
 
     def compute_loss(self, model, inputs):
         query, passage = inputs
-        # queries, passages = self._prepare_inputs(inputs)
         return model(query=query, passage=passage).loss
 
     def training_step(self, *args):

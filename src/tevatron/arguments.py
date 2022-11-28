@@ -131,3 +131,4 @@ class TevatronTrainingArguments(TrainingArguments):
     gc_q_chunk_size: int = field(default=4)
     gc_p_chunk_size: int = field(default=32)
     train_epochs_segments: List[int] = field(default_factory=lambda: [3, 3, 10])
+    start_segemnt_id: int = field(default=0)
