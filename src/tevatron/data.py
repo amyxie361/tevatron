@@ -90,7 +90,7 @@ class SegmentTrainDataset(TrainDataset):
             tokenizer: PreTrainedTokenizer,
             trainer: TevatronTrainer = None,
     ):
-        super(SegmentTrainDataset, self).__init__(data_args, dataset, tokenizer, trainer)
+        super().__init__(data_args, dataset, tokenizer, trainer)
         qid2score = pickle.load(open(data_args.score_file, "rb"))
 
         def add_score(example):
@@ -123,7 +123,43 @@ class SegmentTrainDataset(TrainDataset):
 
     def __getitem__(self, item) -> Tuple[BatchEncoding, List[BatchEncoding]]:
         group = self.train_data[item]
-        # group = {key:self.train_data[key][item] for key in self.train_data}
+        #group = {key:self.train_data[key][item] for key in self.train_data}
+        epoch = int(self.trainer.state.epoch)
+
+        _hashed_seed = hash(item + self.trainer.args.seed)
+
+        qry = group['query']
+        encoded_query = self.create_one_example(qry, is_query=True)
+
+        encoded_passages = []
+        group_positives = group['positives']
+        group_negatives = group['negatives']
+
+        if self.data_args.positive_passage_no_shuffle:
+            pos_psg = group_positives[0]
+        else:
+            pos_psg = group_positives[(_hashed_seed + epoch) % len(group_positives)]
+        encoded_passages.append(self.create_one_example(pos_psg))
+
+        negative_size = self.data_args.train_n_passages - 1
+        if len(group_negatives) < negative_size:
+            negs = random.choices(group_negatives, k=negative_size)
+        elif self.data_args.train_n_passages == 1:
+            negs = []
+        elif self.data_args.negative_passage_no_shuffle:
+            negs = group_negatives[:negative_size]
+        else:
+            _offset = epoch * negative_size % len(group_negatives)
+            negs = [x for x in group_negatives]
+            random.Random(_hashed_seed).shuffle(negs)
+            negs = negs * 2
+            negs = negs[_offset: _offset + negative_size]
+
+        for neg_psg in negs:
+            encoded_passages.append(self.create_one_example(neg_psg))
+
+        return encoded_query, encoded_passages
+
 
 
 class EncodeDataset(Dataset):
