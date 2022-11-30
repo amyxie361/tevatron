@@ -85,6 +85,7 @@ def main():
         train_dataset = TrainDataset(data_args, train_dataset.process(), tokenizer)
     else:
         train_dataset = SegmentTrainDataset(data_args, train_dataset.process(), tokenizer)
+
     if training_args.local_rank == 0:
         print("Loading results from main process")
         torch.distributed.barrier()

@@ -28,6 +28,7 @@ class TrainDataset(Dataset):
         self.trainer = trainer
 
         self.data_args = data_args
+        self.train_data.shuffle()
         self.total_len = len(self.train_data)
 
     def create_one_example(self, text_encoding: List[int], is_query=False):
@@ -40,7 +41,7 @@ class TrainDataset(Dataset):
             return_token_type_ids=False,
         )
         return item
-
+    
     def __len__(self):
         return self.total_len
 

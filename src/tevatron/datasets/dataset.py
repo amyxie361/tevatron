@@ -1,5 +1,5 @@
 import os
-from datasets import load_dataset, load_from_disk
+from datasets import load_dataset, load_from_disk, Dataset
 from transformers import PreTrainedTokenizer
 from .preprocessor import TrainPreProcessor, QueryPreProcessor, CorpusPreProcessor
 from ..arguments import DataArguments
@@ -28,6 +28,8 @@ class HFTrainDataset:
             self.dataset = load_dataset(data_args.dataset_name,
                                     data_args.dataset_language,
                                     data_files=data_files, cache_dir=cache_dir)[data_args.dataset_split]
+        if data_args.max_train_samples:
+            self.dataset = Dataset.from_dict(self.dataset[:data_args.max_train_samples])
         self.preprocessor = PROCESSOR_INFO[data_args.dataset_name][0] if data_args.dataset_name in PROCESSOR_INFO\
             else DEFAULT_PROCESSORS[0]
         self.tokenizer = tokenizer
@@ -47,6 +49,7 @@ class HFTrainDataset:
                 remove_columns=[cn for cn in self.dataset.column_names if cn != 'query_id'],
                 desc="Running tokenizer on train dataset",
             )
+        self.dataset.shuffle()
         return self.dataset
 
 
