@@ -52,6 +52,15 @@ class DataArguments:
     dataset_name: str = field(
         default=None, metadata={"help": "huggingface dataset name"}
     )
+    segment_training: bool = field(
+        default=False, metadata={"help": "whether segment data according to semilarity"}
+    )
+    score_file: str = field(
+        default="qid2score_by_doc_fiqa.pkl", metadata={"help": "file where store the train set similarity to the target domain"}
+    )
+    score_segments: List[float] = field(
+        default_factory=lambda: [0.03, 0.08, 1], metadata={"help": "similarity threshold for segmenting the training set"}
+    )
     passage_field_separator: str = field(default=' ')
     dataset_proc_num: int = field(
         default=12, metadata={"help": "number of proc used in dataset preprocess"}
@@ -61,7 +70,7 @@ class DataArguments:
         default=False, metadata={"help": "always use the first positive passage"})
     negative_passage_no_shuffle: bool = field(
         default=False, metadata={"help": "always use the first negative passages"})
-
+    max_train_samples: int = field(default=None)
     encode_in_path: List[str] = field(default=None, metadata={"help": "Path to data to encode"})
     encoded_save_path: str = field(default=None, metadata={"help": "where to save the encode"})
     encode_is_qry: bool = field(default=False)
@@ -123,3 +132,5 @@ class TevatronTrainingArguments(TrainingArguments):
     grad_cache: bool = field(default=False, metadata={"help": "Use gradient cache update"})
     gc_q_chunk_size: int = field(default=4)
     gc_p_chunk_size: int = field(default=32)
+    train_epochs_segments: List[int] = field(default_factory=lambda: [3, 3, 10])
+    start_segemnt_id: int = field(default=0)

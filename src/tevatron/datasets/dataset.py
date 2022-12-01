@@ -1,4 +1,5 @@
-from datasets import load_dataset
+import os
+from datasets import load_dataset, load_from_disk, Dataset
 from transformers import PreTrainedTokenizer
 from .preprocessor import TrainPreProcessor, QueryPreProcessor, CorpusPreProcessor
 from ..arguments import DataArguments
@@ -21,9 +22,14 @@ class HFTrainDataset:
         data_files = data_args.train_path
         if data_files:
             data_files = {data_args.dataset_split: data_files}
-        self.dataset = load_dataset(data_args.dataset_name,
+        if os.path.isdir(data_args.dataset_name):
+            self.dataset = load_from_disk(data_args.dataset_name)
+        else:
+            self.dataset = load_dataset(data_args.dataset_name,
                                     data_args.dataset_language,
                                     data_files=data_files, cache_dir=cache_dir, use_auth_token=True)[data_args.dataset_split]
+        if data_args.max_train_samples:
+            self.dataset = Dataset.from_dict(self.dataset[:data_args.max_train_samples])
         self.preprocessor = PROCESSOR_INFO[data_args.dataset_name][0] if data_args.dataset_name in PROCESSOR_INFO\
             else DEFAULT_PROCESSORS[0]
         self.tokenizer = tokenizer
@@ -43,6 +49,7 @@ class HFTrainDataset:
                 remove_columns=[cn for cn in self.dataset.column_names if cn != 'query_id'],
                 desc="Running tokenizer on train dataset",
             )
+        self.dataset.shuffle()
         return self.dataset
 
 
@@ -51,7 +58,10 @@ class HFQueryDataset:
         data_files = data_args.encode_in_path
         if data_files:
             data_files = {data_args.dataset_split: data_files}
-        self.dataset = load_dataset(data_args.dataset_name,
+        if os.path.isdir(data_args.dataset_name):
+            self.dataset = load_from_disk(data_args.dataset_name)
+        else:
+            self.dataset = load_dataset(data_args.dataset_name,
                                     data_args.dataset_language,
                                     data_files=data_files, cache_dir=cache_dir, use_auth_token=True)[data_args.dataset_split]
         self.preprocessor = PROCESSOR_INFO[data_args.dataset_name][1] if data_args.dataset_name in PROCESSOR_INFO \
@@ -78,7 +88,10 @@ class HFCorpusDataset:
         data_files = data_args.encode_in_path
         if data_files:
             data_files = {data_args.dataset_split: data_files}
-        self.dataset = load_dataset(data_args.dataset_name,
+        if os.path.isdir(data_args.dataset_name):
+            self.dataset = load_from_disk(data_args.dataset_name)
+        else:
+            self.dataset = load_dataset(data_args.dataset_name,
                                     data_args.dataset_language,
                                     data_files=data_files, cache_dir=cache_dir, use_auth_token=True)[data_args.dataset_split]
         script_prefix = data_args.dataset_name

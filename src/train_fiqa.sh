@@ -1,0 +1,15 @@
+python -m tevatron.driver.train \
+  --output_dir msmarco_fiqa_test \
+  --model_name_or_path model_msmarco \
+  --save_steps 5000 \
+  --dataset_name fiqa_training.hf \
+  --fp16 \
+  --per_device_train_batch_size 64 \
+  --train_n_passages 1 \
+  --learning_rate 1e-5 \
+  --q_max_len 64 \
+  --p_max_len 128 \
+  --num_train_epochs 80 \
+  --gc_p_chunk_size 8 \
+  --logging_steps 10 \
+  --overwrite_output_dir
