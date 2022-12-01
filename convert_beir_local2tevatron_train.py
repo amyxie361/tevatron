@@ -7,8 +7,9 @@ from beir.datasets.data_loader import GenericDataLoader
 from tevatron.datasets.dataset import load_dataset
 
 dataset_name = "bioasq"
+split = "test"
 
-corpus, queries, qrels = GenericDataLoader(data_folder="/home/y247xie/00_data/beir/{}".format(dataset_name)).load(split="train")
+corpus, queries, qrels = GenericDataLoader(data_folder="/home/y247xie/00_data/beir/{}".format(dataset_name)).load(split=split)
 
 train_dataset = {"query_id":[], "query": [], "positive_passages":[], "negative_passages":[]}
 
@@ -39,4 +40,4 @@ for qid in tqdm(qrels):
     train_dataset["negative_passages"].append(neg_passages)
     
 dataset = Dataset.from_dict(train_dataset)
-dataset.save_to_disk("tev-beir-datasets/{}_training.hf".format(dataset_name))
+dataset.save_to_disk("tev-beir-datasets/{}_{}.hf".format(dataset_name, split))
