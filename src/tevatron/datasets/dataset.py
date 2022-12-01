@@ -58,7 +58,10 @@ class HFQueryDataset:
         data_files = data_args.encode_in_path
         if data_files:
             data_files = {data_args.dataset_split: data_files}
-        self.dataset = load_dataset(data_args.dataset_name,
+        if os.path.isdir(data_args.dataset_name):
+            self.dataset = load_from_disk(data_args.dataset_name)
+        else:
+            self.dataset = load_dataset(data_args.dataset_name,
                                     data_args.dataset_language,
                                     data_files=data_files, cache_dir=cache_dir)[data_args.dataset_split]
         self.preprocessor = PROCESSOR_INFO[data_args.dataset_name][1] if data_args.dataset_name in PROCESSOR_INFO \
@@ -85,7 +88,10 @@ class HFCorpusDataset:
         data_files = data_args.encode_in_path
         if data_files:
             data_files = {data_args.dataset_split: data_files}
-        self.dataset = load_dataset(data_args.dataset_name,
+        if os.path.isdir(data_args.dataset_name):
+            self.dataset = load_from_disk(data_args.dataset_name)
+        else:
+            self.dataset = load_dataset(data_args.dataset_name,
                                     data_args.dataset_language,
                                     data_files=data_files, cache_dir=cache_dir)[data_args.dataset_split]
         script_prefix = data_args.dataset_name

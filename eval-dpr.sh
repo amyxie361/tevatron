@@ -4,7 +4,7 @@ for samples in 1000
 do
 for dataset in fiqa
 do
-for lr in 1e-5 #1e-4
+for lr in 1e-6
 do
 for bs in 64 32 16 8 4 2 1
 do
@@ -16,7 +16,7 @@ python -m tevatron.driver.encode \
   --output_dir=${EXP_PATH}/output \
   --model_name_or_path ${EXP_PATH} \
   --fp16 \
-  --per_device_eval_batch_size 64 \
+  --per_device_eval_batch_size 128 \
   --dataset_name Tevatron/beir-corpus:${dataset} \
   --p_max_len 512 \
   --encoded_save_path ${EXP_PATH}/corpus_emb.pt
@@ -26,7 +26,7 @@ python -m tevatron.driver.encode \
   --output_dir=${EXP_PATH}/output \
   --model_name_or_path ${EXP_PATH} \
   --fp16 \
-  --per_device_eval_batch_size 156 \
+  --per_device_eval_batch_size 256 \
   --dataset_name Tevatron/beir:${dataset}/${EVAL} \
   --encode_is_qry \
   --q_max_len 64 \
